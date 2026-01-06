@@ -1,0 +1,174 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  email        String  @unique
+  name         String?
+  password     String
+  store        Store?
+  cart         Cart[]
+  address      Address[]
+  review       Review[]
+  order        Order[]
+}
+
+model Store {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  slug         String   @unique
+  logo         String?
+  logoId       String?
+  description  String?
+  orders       OrderItem[]
+
+  ownerId      String   @unique @db.ObjectId
+  owner        User     @relation(fields: [ownerId], references: [id])
+
+  products     Product[]
+  createdAt    DateTime @default(now())
+}
+
+model Product {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  price       Float
+  images      ProductImage[]
+  stock       Int
+  category    String
+  review      Review[]
+  CartItem   CartItem[]
+  OrderItem   OrderItem[]
+  createdAt   DateTime @default(now())
+  storedId    String? @db.ObjectId
+  store       Store? @relation(fields: [storedId], references: [id])
+  @@index([name])
+  @@index([category])
+}
+model ProductImage {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  productId   String    @db.ObjectId
+  publicId    String?
+  url         String
+  isPrimary   Boolean  @default(false)
+
+  product     Product  @relation(fields: [productId], references: [id])
+}
+model Cart {
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String       @unique @db.ObjectId
+  storedId  String?      @db.ObjectId
+  user      User         @relation(fields: [userId], references: [id])
+  items     CartItem[]   @relation("CartToCartItem")
+  updatedAt DateTime     @updatedAt
+}
+
+model CartItem {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  productId   String   @db.ObjectId
+  product     Product?  @relation(fields: [productId], references: [id])
+  quantity    Int  
+  cartId      String   @db.ObjectId
+
+  cart        Cart @relation(fields: [cartId], references: [id], name: "CartToCartItem")
+
+  @@unique([cartId, productId])
+}
+
+model Address{
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User?     @relation(fields: [userId], references: [id])
+  street    String
+  number    String
+  city      String
+  zip       String
+  country   String
+  
+  isDefault Boolean @default(false)
+}
+model Order {
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String       @db.ObjectId
+  user          User         @relation(fields: [userId], references: [id])
+  status        OrderStatus  @default(PENDING)
+  total         Float
+  paymentMethod MethodPayment
+  address       OrderAddress?
+  items         OrderItem[]
+  review        Review[]
+  shippedAt     DateTime?
+  deliveredAt   DateTime?
+  createdAt     DateTime     @default(now())
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String   @db.ObjectId
+  productId String   @db.ObjectId
+  storeId   String?   @db.ObjectId
+  quantity  Int
+  price     Float   
+
+  order     Order    @relation(fields: [orderId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  store     Store?    @relation(fields: [storeId], references: [id])
+
+    @@index([orderId])
+    @@index([productId])
+    @@index([storeId])
+}
+
+model OrderAddress {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+
+  orderId String  @unique @db.ObjectId
+  order   Order   @relation(fields: [orderId], references: [id])
+
+  street  String
+  number  String
+  city    String
+  zip     String
+  country String
+}
+
+enum MethodPayment {
+  PIX
+  CREDIT_CARD
+  DEBIT_CARD
+  BOLETO
+}
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELED
+}
+
+model Review {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  orderId   String   @db.ObjectId
+  userId    String   @db.ObjectId
+  productId String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  order     Order?   @relation(fields: [userId], references: [id])
+
+  @@unique([orderId, productId])
+
+}
