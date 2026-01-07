@@ -5,6 +5,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule,{
     cors:{
       origin:['https://01kevinms.github.io/e_commerce/'],
+  
       credentials: true,
       allowedHeaders:'Content-Type, Authorization',
       methods:'GET,POST,PUT,DELETE,OPTIONS',
