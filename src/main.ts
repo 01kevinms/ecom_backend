@@ -4,7 +4,7 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule,{
     cors:{
-      origin:['https://github.com/01kevinms/e_commerce/tree/master'],
+      origin:['https://01kevinms.github.io/e_commerce/'],
       credentials: true,
       allowedHeaders:'Content-Type, Authorization',
       methods:'GET,POST,PUT,DELETE,OPTIONS',
